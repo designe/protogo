@@ -34,6 +34,7 @@ window.Protogo = (function() {
             this.fields = {};
 
             console.log(_src);
+            var _overlap_data = [];
             for(var _d in _src[0]) {
                 var _src_idx = 0;
                 var _data_array = [];
@@ -57,9 +58,20 @@ window.Protogo = (function() {
                     for(var j = 1; j < _data.length; j++) {
                         if(!_current[_data[j]])
                             _current[_data[j]] = {};
+                        
                         _current = _current[_data[j]];
+                        
+                        if(_data[j-1] == ' '){ // ROOT ADD CONDITION
+                            if(_value_root[_data[j]]){
+                                var _obj = {};
+                                _obj[_data[j]] = _current;
+                                _overlap_data.push(_obj);
+                            }
+                            else
+                                _value_root[_data[j]] = _current;
+                        }
                     }
-
+                    
                     if(!_current["raw"])
                         _current["raw"] = [];
                     
@@ -68,6 +80,27 @@ window.Protogo = (function() {
                     console.log(_value_root);
                 }
 
+                console.log("중복 데이터");
+                console.log(_overlap_data);
+                /* overlap data should be fixed!
+                for(var i = 0; i < _overlap_data; i++) {
+                    var _repeatData = _overlap_data[i];
+                    var _current = _field_root;
+                    while (!_repeatData.raw) {
+                        if(_current[_repeatString[j]]){
+                            _current = _current[_repeatString[j]];
+                            continue;
+                        }else {
+                            _current[_repeatString[j]] = {};
+                            _current = _current[_repeatString[j]];
+                        }
+                    }
+
+                    if(_current["raw"]){
+                        
+                    }
+                }*/
+                
                 this.fields[_d] = {
                     idx : _field_cnt,
                     value_list : _data_array,
@@ -118,16 +151,6 @@ window.Protogo = (function() {
                             console.log("there is no result");
                         }
                         
-                        
-                        // linear search 1
-                        /*
-                        //console.log(this.value_list);
-                        for(var i = 0 ; i < this.value_list.length; i++) {
-                            //console.log(this.value_list[i]);
-                            if(this.value_list[i].indexOf(_query) >= 0)
-                                _queryResult.push(this.value_list[i]);
-                        }*/
-                        
                         return _queryResult;
                     }
                 };
@@ -146,11 +169,12 @@ window.Protogo = (function() {
         },
         search: function(_query) {
             console.log("total query : " + _query);
-
-            
         },
         toString: function() {
             return JSON.stringify(this.fields);
+        },
+        toHash: function(str) {
+            return str.charCodeAt();
         }
     };
 

@@ -24,7 +24,6 @@ window.Protogo = (function() {
     protogo.prototype = {
         init: function(_src) {
             raw = _src;
-            console.log("Load data source ;)");
 
             var _field_cnt = 0;
             var _field_idx = {};
@@ -33,8 +32,6 @@ window.Protogo = (function() {
 
             this.fields = {};
 
-            console.log(_src);
-            var _overlap_data = [];
             for(var _d in _src[0]) {
                 var _src_idx = 0;
                 var _data_array = [];
@@ -63,9 +60,20 @@ window.Protogo = (function() {
                         
                         if(_data[j-1] == ' '){ // ROOT ADD CONDITION
                             if(_value_root[_data[j]]){
-                                var _obj = {};
-                                _obj[_data[j]] = _current;
-                                _overlap_data.push(_obj);
+                                var _root_iterator = _value_root[_data[j]];
+                                for(var k = j+1; k < _data.length; k++){
+                                    if(_root_iterator[_data[k]]) {
+                                        _root_iterator = _root_iterator[_data[k]];
+                                    }else {
+                                        _root_iterator[_data[k]] = {};
+                                        _root_iterator = _root_iterator[_data[k]];
+                                    }
+                                }
+
+                                if(!_root_iterator["raw"]){
+                                    _root_iterator["raw"] = [];
+                                    _root_iterator["raw"].push(_src[i]);
+                                }
                             }
                             else
                                 _value_root[_data[j]] = _current;
@@ -76,31 +84,8 @@ window.Protogo = (function() {
                         _current["raw"] = [];
                     
                     _current["raw"].push(_src[i]);
-
-                    console.log(_value_root);
                 }
 
-                console.log("중복 데이터");
-                console.log(_overlap_data);
-                /* overlap data should be fixed!
-                for(var i = 0; i < _overlap_data; i++) {
-                    var _repeatData = _overlap_data[i];
-                    var _current = _field_root;
-                    while (!_repeatData.raw) {
-                        if(_current[_repeatString[j]]){
-                            _current = _current[_repeatString[j]];
-                            continue;
-                        }else {
-                            _current[_repeatString[j]] = {};
-                            _current = _current[_repeatString[j]];
-                        }
-                    }
-
-                    if(_current["raw"]){
-                        
-                    }
-                }*/
-                
                 this.fields[_d] = {
                     idx : _field_cnt,
                     value_list : _data_array,
@@ -113,8 +98,6 @@ window.Protogo = (function() {
                         var _idx = 0;
                         for(var i = 0 ; i < _query.length; i++) {
                             if(_current[_query[i]]){
-                                console.log(_idx);
-                                console.log(_current);
                                 _current = _current[_query[i]];
                                 _idx++;
                                 continue;
@@ -142,7 +125,6 @@ window.Protogo = (function() {
                                 }
 
                                 for(var _sub in _queue_root[_queue_idx]){
-                                    console.log(_sub);
                                     _queue_root.push(_queue_root[_queue_idx][_sub]);
                                     _queue_end++;
                                 }

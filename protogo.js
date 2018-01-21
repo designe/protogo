@@ -8,34 +8,46 @@
  *
 **/
 
-MATCH_THRESHOLD = 3;
-
 window.Protogo = (function() {
     function protogo() {
         var about = {
             VERSION : '0.1',
             AUTHOR : "jbear"
         };
-        var MATCH_THRESHOLD = 3;
-        var raw = null;
-        var fields = {};
+        this.MATCH_THRESHOLD = 3;
+        this.raw = null;
+        this.fields = {};
+        // this.root = {};
     }
     
     protogo.prototype = {
         init: function(_src) {
-            raw = _src;
-
+            this.raw = _src;
+            this.fields = {};
+            
+            return this.add(_src);
+            
+        },
+        add: function(_src) {
             var _field_cnt = 0;
             var _field_idx = {};
             var _field_names = [];
-            var _field_root = {};
+            //var _field_root = this.root;
 
-            this.fields = {};
-
+            var _MATCH_THRESHOLD = this.MATCH_THRESHOLD;
             for(var _d in _src[0]) {
-                var _src_idx = 0;
-                var _data_array = [];
-                var _value_root = _field_root;
+                // var _src_idx = 0;
+                var _value_root;
+                var _data_array;
+                
+                if(this.fields[_d]){
+                    _value_root = (typeof this.fields[_d].root == "undefined") ? {} : this.fields[_d].root;
+                    _data_array = (typeof this.fields[_d].value_list == "undefined") ? [] : this.fields[_d].value_list;
+                } else {
+                    _value_root = {};
+                    _data_array = [];
+                }
+
                 
                 _field_names.push(_d);
                 _field_idx[_d] = _field_cnt;
@@ -60,6 +72,8 @@ window.Protogo = (function() {
                         
                         if(_data[j-1] == ' '){ // ROOT ADD CONDITION
                             if(_value_root[_data[j]]){
+                                console.log(_data[j]);
+                                console.log(_value_root[_data[j]]);
                                 var _root_iterator = _value_root[_data[j]];
                                 for(var k = j+1; k < _data.length; k++){
                                     if(_root_iterator[_data[k]]) {
@@ -95,6 +109,7 @@ window.Protogo = (function() {
 
                         // trie search applied
                         var _current = this.root;
+                        console.log(_current);
                         var _idx = 0;
                         for(var i = 0 ; i < _query.length; i++) {
                             if(_current[_query[i]]){
@@ -109,7 +124,7 @@ window.Protogo = (function() {
                         if(_current.raw) {
                             _queryResult = _current.raw;
                         }
-                        else if(_idx >= MATCH_THRESHOLD){
+                        else if(_idx >= _MATCH_THRESHOLD){
                             var _queue_idx = 0;
                             var _queue_end = 0;
                             var _queue_root = [];
@@ -147,7 +162,7 @@ window.Protogo = (function() {
             };
 
             return this.fields;
-            
+
         },
         search: function(_query) {
             console.log("total query : " + _query);

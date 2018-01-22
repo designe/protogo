@@ -149,6 +149,8 @@ window.Protogo = (function() {
                     }
                 };
 
+                this[_d] = this.fields[_d];
+
                 _field_cnt++;
             }
 
@@ -158,11 +160,21 @@ window.Protogo = (function() {
                 return this.fields.names[_idx];
             };
 
+            console.log(this);
+
             return this.fields;
 
         },
         search: function(_query) {
-            console.log("total query : " + _query);
+            var result = [];
+            console.log(this.fields);
+            for(let _column of this.fields.names) {
+                var _field_result = this[_column].search(_query);
+                for(var i = 0; i < _field_result.length; i++)
+                    result.push(_field_result[i]);
+            }
+
+            return result;
         },
         toString: function() {
             return JSON.stringify(this.fields);

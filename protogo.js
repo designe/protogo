@@ -71,26 +71,23 @@ window.Protogo = (function() {
                         _current = _current[_data[j]];
                         
                         if(_data[j-1] == ' '){ // ROOT ADD CONDITION
-                            if(_value_root[_data[j]]){
-                                console.log(_data[j]);
-                                console.log(_value_root[_data[j]]);
-                                var _root_iterator = _value_root[_data[j]];
-                                for(var k = j+1; k < _data.length; k++){
-                                    if(_root_iterator[_data[k]]) {
-                                        _root_iterator = _root_iterator[_data[k]];
-                                    }else {
-                                        _root_iterator[_data[k]] = {};
-                                        _root_iterator = _root_iterator[_data[k]];
-                                    }
-                                }
-
-                                if(!_root_iterator["raw"]){
-                                    _root_iterator["raw"] = [];
-                                    _root_iterator["raw"].push(_src[i]);
+                            if(!_value_root[_data[j]])
+                                _value_root[_data[j]] = {};
+                        
+                            var _root_iterator = _value_root[_data[j]];
+                            for(var k = j+1; k < _data.length; k++){
+                                if(_root_iterator[_data[k]]) {
+                                    _root_iterator = _root_iterator[_data[k]];
+                                }else {
+                                    _root_iterator[_data[k]] = {};
+                                    _root_iterator = _root_iterator[_data[k]];
                                 }
                             }
-                            else
-                                _value_root[_data[j]] = _current;
+
+                            if(!_root_iterator["raw"]){
+                                _root_iterator["raw"] = [];
+                                _root_iterator["raw"].push(_src[i]);
+                            }
                         }
                     }
                     
@@ -109,7 +106,7 @@ window.Protogo = (function() {
 
                         // trie search applied
                         var _current = this.root;
-                        console.log(_current);
+
                         var _idx = 0;
                         for(var i = 0 ; i < _query.length; i++) {
                             if(_current[_query[i]]){

@@ -1,6 +1,6 @@
 /**
  *
- * PROTOGO; Machine Learning Library for Prototype on Javascript
+ * PROTOGO; Library for data prototyping
  *
  * Author : jbear; hello.designe@facebook.com
  * Contact : http://jbear.co
@@ -11,10 +11,10 @@
 window.Protogo = (function() {
     function protogo() {
         var about = {
-            VERSION : '0.1',
+            VERSION : '0.2',
             AUTHOR : "jbear"
         };
-        this.MATCH_THRESHOLD = 3;
+        this.MATCH_THRESHOLD = 1;
         this.raw = null;
         this.fields = {};
         // this.root = {};
@@ -130,15 +130,17 @@ window.Protogo = (function() {
                                 _queue_end++;
                             }
                             for(_queue_idx = 0; _queue_idx != _queue_end; _queue_idx++) {
-                                if(_queue_root[_queue_idx]["raw"]){
-                                    for(var i = 0 ; i < _queue_root[_queue_idx]["raw"].length; i++)
-                                        _queryResult.push(_queue_root[_queue_idx]["raw"][i]);
-                                    continue;
-                                }
-
-                                for(var _sub in _queue_root[_queue_idx]){
-                                    _queue_root.push(_queue_root[_queue_idx][_sub]);
-                                    _queue_end++;
+                                for(var _sub in _queue_root[_queue_idx]) {
+                                    if(_sub == "raw") {
+                                        for(var i = 0 ; i < _queue_root[_queue_idx]["raw"].length; i++)
+                                            _queryResult.push(_queue_root[_queue_idx]["raw"][i]);
+                                        continue;
+                                    } else {
+                                        console.log("SUB = ");
+                                        console.log(_queue_root[_queue_idx][_sub]);
+                                        _queue_root.push(_queue_root[_queue_idx][_sub]);
+                                        _queue_end++;
+                                    }
                                 }
                             }
                         } else {

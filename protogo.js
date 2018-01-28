@@ -14,7 +14,7 @@ window.Protogo = (function() {
             VERSION : '0.2',
             AUTHOR : "jbear"
         };
-        this.MATCH_THRESHOLD = 1;
+        this.MATCH_THRESHOLD = 2;
         this.raw = null;
         this.fields = {};
         // this.root = {};
@@ -32,6 +32,7 @@ window.Protogo = (function() {
             var _field_cnt = 0;
             var _field_idx = {};
             var _field_names = [];
+            var _field_order = [];
             //var _field_root = this.root;
 
             var _MATCH_THRESHOLD = this.MATCH_THRESHOLD;
@@ -47,11 +48,12 @@ window.Protogo = (function() {
                     _value_root = {};
                     _data_array = [];
                 }
-
                 
                 _field_names.push(_d);
                 _field_idx[_d] = _field_cnt;
 
+                _field_order.push(_field_cnt);
+                
                 for(var i = 0; i < _src.length; i++) {
                     var _data = _src[i][_d];
                     _data_array.push(_data);
@@ -107,6 +109,9 @@ window.Protogo = (function() {
                         // trie search applied
                         var _current = this.root;
 
+                        if(this.MATCH_THRESHOLD)
+                            _MATCH_THRESHOLD = this.MATCH_THRESHOLD;
+                        
                         var _idx = 0;
                         for(var i = 0 ; i < _query.length; i++) {
                             if(_current[_query[i]]){
@@ -136,8 +141,6 @@ window.Protogo = (function() {
                                             _queryResult.push(_queue_root[_queue_idx]["raw"][i]);
                                         continue;
                                     } else {
-                                        console.log("SUB = ");
-                                        console.log(_queue_root[_queue_idx][_sub]);
                                         _queue_root.push(_queue_root[_queue_idx][_sub]);
                                         _queue_end++;
                                     }
@@ -161,6 +164,7 @@ window.Protogo = (function() {
             this.fields.get = (_idx) => {
                 return this.fields.names[_idx];
             };
+            this.fields.order = _field_order;
 
             console.log(this);
 
@@ -170,13 +174,24 @@ window.Protogo = (function() {
         search: function(_query) {
             var result = [];
             console.log(this.fields);
-            for(let _column of this.fields.names) {
-                var _field_result = this[_column].search(_query);
-                for(var i = 0; i < _field_result.length; i++)
-                    result.push(_field_result[i]);
+
+            console.log("field count = " + this.fields.count);
+            for(var i = 0; i < this.fields.count; i++) {
+                var _idx = this.fields.order[i];
+                console.log(_idx);
+                console.log(this.fields.names[_idx]);
+                var _field_result = this[this.fields.names[_idx]].search(_query);
+
+                console.log(_field_result);
+                
+                for(var j = 0; j < _field_result.length; j++)
+                    result.push(_field_result[j]);
             }
 
             return result;
+        },
+        setOrder: function(_order) {
+            this.fields.order = _order;
         },
         toString: function() {
             return JSON.stringify(this.fields);

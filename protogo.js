@@ -122,17 +122,18 @@ window.Protogo = (function() {
                             else
                                 break;
                         }
-
-                        if(_current.raw) {
-                            _queryResult = _current.raw;
-                        }
-                        else if(_idx >= _MATCH_THRESHOLD){
+                        if(_idx >= _MATCH_THRESHOLD){
                             var _queue_idx = 0;
                             var _queue_end = 0;
                             var _queue_root = [];
                             for(var _v in _current){
-                                _queue_root.push(_current[_v]);
-                                _queue_end++;
+                                if(_v == "raw"){
+                                    for(var i = 0; i < _current[_v].length; i++)
+                                        _queryResult.push(_current[_v][i]);
+                                } else {
+                                    _queue_root.push(_current[_v]);
+                                    _queue_end++;
+                                }
                             }
                             for(_queue_idx = 0; _queue_idx != _queue_end; _queue_idx++) {
                                 for(var _sub in _queue_root[_queue_idx]) {

@@ -195,11 +195,11 @@ window.Protogo = (function() {
             /* _first's length is longer than _second's length */
             var _first, _second;
             if(_a.length > _b.length) {
-                _first = a;
-                _second = b;
+                _first = _a;
+                _second = _b;
             }else {
-                _first = b;
-                _second = a;
+                _first = _b;
+                _second = _a;
             }
 
             var _table = new Array(_first.length + 1);

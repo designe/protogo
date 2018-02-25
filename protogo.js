@@ -191,6 +191,47 @@ window.Protogo = (function() {
 
             return result;
         },
+        compare: function(_a, _b) {
+            /* _first's length is longer than _second's length */
+            var _first, _second;
+            if(_a.length > _b.length) {
+                _first = a;
+                _second = b;
+            }else {
+                _first = b;
+                _second = a;
+            }
+
+            var _table = new Array(_first.length + 1);
+            for(var i = 0; i < _first.length; i++)
+                _table[i] = new Array(_second.length + 1);
+
+            for(var i = 0; i < _first.length + 1; i++) {
+                _table[i][0] = i;
+                if(_second.length >= i)
+                    _table[0][i] = i;
+            }
+
+            for(var i = 1; i < _first.length + 1; i++) {
+                for(var j = 1; j < _second.length + 1; j++) {
+                    if(_first[i-1] == _second[j-1]) {
+                        _table[i][j] = _table[i-1][j-1];
+                    } else {
+                        var _min = _table[i-1][j-1];
+                        if(_table[i-1][j] > _table[i][j-1]) {
+                            if(_min > _table[i][j-1])
+                                _min = _table[i][j-1];
+                        } else {
+                            if(_min > _table[i-1][j])
+                                _min = _table[i-1][j];
+                        }
+                        _table[i][j] = _min + 1;
+                    }
+                }
+            }
+
+            return _table[_first.length][_second.length];
+        },
         setOrder: function(_order) {
             this.fields.order = _order;
         },

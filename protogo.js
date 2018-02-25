@@ -203,7 +203,7 @@ window.Protogo = (function() {
             }
 
             var _table = new Array(_first.length + 1);
-            for(var i = 0; i < _first.length; i++)
+            for(var i = 0; i <= _first.length; i++)
                 _table[i] = new Array(_second.length + 1);
 
             for(var i = 0; i < _first.length + 1; i++) {

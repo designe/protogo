@@ -14,165 +14,254 @@ window.Protogo = (function() {
             VERSION : '0.2',
             AUTHOR : "jbear"
         };
+        _proto = this;
         this.MATCH_THRESHOLD = 2;
         this.raw = null;
         this.fields = {};
         // this.root = {};
     }
-    
+
     protogo.prototype = {
         init: function(_src) {
-            this.raw = _src;
-            this.fields = {};
-            
+            var self = this;
+
+            _proto.raw = _src;
+            _proto.fields = {};
+
             return this.add(_src);
-            
         },
+        /* Analyzing part of source data structure */
         add: function(_src) {
-            var _field_cnt = 0;
-            var _field_idx = {};
-            var _field_names = [];
-            var _field_order = [];
-            //var _field_root = this.root;
+            var self = this;
+            // case of Array
+            if(_src.constructor === Array) {
+                var _field_cnt = 0;
+                var _field_idx = {};
+                var _field_names = [];
+                var _field_order = [];
 
-            var _MATCH_THRESHOLD = this.MATCH_THRESHOLD;
-            for(var _d in _src[0]) {
-                // var _src_idx = 0;
-                var _value_root;
-                var _data_array;
-                
-                if(this.fields[_d]){
-                    _value_root = (typeof this.fields[_d].root == "undefined") ? {} : this.fields[_d].root;
-                    _data_array = (typeof this.fields[_d].value_list == "undefined") ? [] : this.fields[_d].value_list;
-                } else {
-                    _value_root = {};
-                    _data_array = [];
-                }
-                
-                _field_names.push(_d);
-                _field_idx[_d] = _field_cnt;
+                var _MATCH_THRESHOLD = self.MATCH_THRESHOLD;
 
-                _field_order.push(_field_cnt);
-                
-                for(var i = 0; i < _src.length; i++) {
-                    var _data = _src[i][_d];
-                    _data_array.push(_data);
+                var _ks = Object.keys(_src[0]);
 
-                    /*
-                      * TRIE ROOT SETTING
-                      */
-                    if(!_value_root[_data[0]])
-                        _value_root[_data[0]] = {};
+                console.log(_ks);
 
-                    var _current = _value_root[_data[0]];
+                _ks.some(function(_key) {
+                    var _value_root;
+                    var _data_array;
 
-                    for(var j = 1; j < _data.length; j++) {
-                        if(!_current[_data[j]])
-                            _current[_data[j]] = {};
-                        
-                        _current = _current[_data[j]];
-                        
-                        if(_data[j-1] == ' '){ // ROOT ADD CONDITION
-                            if(!_value_root[_data[j]])
-                                _value_root[_data[j]] = {};
-                        
-                            var _root_iterator = _value_root[_data[j]];
-                            for(var k = j+1; k < _data.length; k++){
-                                if(_root_iterator[_data[k]]) {
-                                    _root_iterator = _root_iterator[_data[k]];
-                                }else {
-                                    _root_iterator[_data[k]] = {};
-                                    _root_iterator = _root_iterator[_data[k]];
-                                }
-                            }
+                    console.log(_key);
 
-                            if(!_root_iterator["raw"]){
-                                _root_iterator["raw"] = [];
-                                _root_iterator["raw"].push(_src[i]);
-                            }
-                        }
+                    if(typeof _proto.fields[_key] != 'undefined'){
+                        console.log(self.fields[_key]);
+                        _value_root = (typeof _proto.fields[_key].root == 'undefined') ? {} : _proto.fields[_key].root;
+                        _data_array = (typeof _proto.fields[_key].value_list == 'undefined') ? [] : _proto.fields[_key].value_list;
+                    } else {
+                        _value_root = {};
+                        _data_array = [];
                     }
-                    
-                    if(!_current["raw"])
-                        _current["raw"] = [];
-                    
-                    _current["raw"].push(_src[i]);
-                }
 
-                this.fields[_d] = {
-                    idx : _field_cnt,
-                    value_list : _data_array,
-                    root : _value_root,
-                    search : function(_query){
-                        var _queryResult = [];
+                    _field_names.push(_key);
+                    _field_idx[_key] = _field_cnt;
+                    _field_order.push(_field_cnt);
 
-                        // trie search applied
-                        var _current = this.root;
+                    var word_count = _src.length;
 
-                        if(this.MATCH_THRESHOLD)
-                            _MATCH_THRESHOLD = this.MATCH_THRESHOLD;
-                        
-                        var _idx = 0;
-                        for(var i = 0 ; i < _query.length; i++) {
-                            if(_current[_query[i]]){
-                                _current = _current[_query[i]];
-                                _idx++;
-                                continue;
-                            }
-                            else
-                                break;
-                        }
-                        if(_idx >= _MATCH_THRESHOLD){
-                            var _queue_idx = 0;
-                            var _queue_end = 0;
-                            var _queue_root = [];
-                            for(var _v in _current){
-                                if(_v == "raw"){
-                                    for(var i = 0; i < _current[_v].length; i++)
-                                        _queryResult.push(_current[_v][i]);
-                                } else {
-                                    _queue_root.push(_current[_v]);
-                                    _queue_end++;
+                    for(var i = 0;  i < word_count; i++) {
+                        var _word = _src[i][_key];
+                        _data_array.push(_word);
+                        self.addOnBasicTrie(_value_root, _word, _src[i]);
+                    }
+
+                    _proto.fields[_key] = {
+                        idx : _field_cnt,
+                        value_list : _data_array,
+                        root : _value_root,
+                        search : function(_query){
+
+                            var _queryResult = [];
+
+                            // trie search applied
+                            var _current = this.root;
+
+                            if(self.MATCH_THRESHOLD)
+                                _MATCH_THRESHOLD = self.MATCH_THRESHOLD;
+
+                            var _idx = 0;
+                            for(var i = 0 ; i < _query.length; i++) {
+                                if(_current[_query[i]]){
+                                    _current = _current[_query[i]];
+                                    _idx++;
+                                    continue;
                                 }
+                                else
+                                    break;
                             }
-                            for(_queue_idx = 0; _queue_idx != _queue_end; _queue_idx++) {
-                                for(var _sub in _queue_root[_queue_idx]) {
-                                    if(_sub == "raw") {
-                                        for(var i = 0 ; i < _queue_root[_queue_idx]["raw"].length; i++)
-                                            _queryResult.push(_queue_root[_queue_idx]["raw"][i]);
-                                        continue;
+                            if(_idx >= _MATCH_THRESHOLD){
+                                var _queue_idx = 0;
+                                var _queue_end = 0;
+                                var _queue_root = [];
+                                for(var _v in _current){
+                                    if(_v == "raw"){
+                                        for(var i = 0; i < _current[_v].length; i++)
+                                            _queryResult.push(_current[_v][i]);
                                     } else {
-                                        _queue_root.push(_queue_root[_queue_idx][_sub]);
+                                        _queue_root.push(_current[_v]);
                                         _queue_end++;
                                     }
                                 }
+                                for(_queue_idx = 0; _queue_idx != _queue_end; _queue_idx++) {
+                                    for(var _sub in _queue_root[_queue_idx]) {
+                                        if(_sub == "raw") {
+                                            for(var i = 0 ; i < _queue_root[_queue_idx]["raw"].length; i++)
+                                                _queryResult.push(_queue_root[_queue_idx]["raw"][i]);
+                                            continue;
+                                        } else {
+                                            _queue_root.push(_queue_root[_queue_idx][_sub]);
+                                            _queue_end++;
+                                        }
+                                    }
+                                }
+                            } else {
+                                console.log("there is no result");
                             }
-                        } else {
-                            console.log("there is no result");
+
+                            return _queryResult;
                         }
-                        
-                        return _queryResult;
-                    }
+                    };
+
+                    _proto[_key] = _proto.fields[_key];
+                    _field_cnt++;
+                });
+
+                _proto.fields.names = _field_names;
+                _proto.fields.count = _field_cnt;
+                _proto.fields.get = (_idx) => {
+                    return _proto.fields.names[_idx];
                 };
+                _proto.fields.order = _field_order;
 
-                this[_d] = this.fields[_d];
-
-                _field_cnt++;
+                return _proto.fields;
+            }    /* end of source array */
+            else {
+                return null;
             }
 
-            this.fields.names = _field_names;
-            this.fields.count = _field_cnt;
-            this.fields.get = (_idx) => {
-                return this.fields.names[_idx];
-            };
-            this.fields.order = _field_order;
-
-            console.log(this);
-
-            return this.fields;
-
+            //return this.addOnBasicTrie(_src);
         },
         search: function(_query) {
+            return this.searchOnBasicTrie(_query);
+        },
+        addOnMoebiousTrie: function(_root, _word, _what) {
+            var self = this;
+            var current = _root;
+
+            console.log(`log : ${_root}, ${_word}, ${_what}`);
+            var prefix = null;
+            var prefix_length = 0;
+            for(var i = _word.length; i >= 1; i--) {
+                var subword = _word.substr(0, i);
+                if(current[subword]) {
+                    prefix = subword;
+                    prefix_length = i;
+                    break;
+                }
+            }
+
+            if(prefix) {
+                console.log(`1 log : ${prefix}`);
+                self.addOnMoebiousTrie(current[prefix], _word.substr(prefix_length, _word.length), _what);
+            }
+            else {
+                console.log(`2 log : ${_word}`);
+                var rootKeys = null;//Object.keys(current);
+                if(current.__object$) {
+                    var current_temp = Object.assign({}, current);
+                    delete current_temp.__object$;
+                    rootKeys = Object.keys(current_temp);
+                } else {
+                    rootKeys = Object.keys(current);
+                }
+
+                var found_check = false;
+                if(rootKeys.length > 0) {
+                    rootKeys.some(function(_key) {
+                        if(_key[0] == _word[0]) {
+                            found_check = true;
+                            
+                            prefix = _key[0];
+                            prefix_length = 1;
+                            for(; prefix_length < _key.length; prefix_length++) {
+                                if(_key[prefix_length] != _word[prefix_length]){
+                                    prefix = _word.substr(0, prefix_length);
+                                    break;
+                                }
+                            }
+
+                            console.log(`${prefix}, ${_key}, ${_word}`);
+                            current[prefix] = {};
+                            current[prefix][_key.substr(prefix_length, _key.length - prefix_length)] = current[_key];
+                            delete current[_key];
+
+                            if(prefix.localeCompare(_word))
+                                current[prefix][_word.substr(prefix_length, _word.length - prefix_length)].__object$ = _what;
+                            else
+                                current[prefix].__object$ = _what;
+                            
+                        }
+                    });
+                }
+
+                if(!found_check){
+                    current[_word] = {};
+                    current[_word].__object$ = _what;
+                }
+            }
+        },
+        addOnBasicTrie: function(_root, _word, _what) {
+            var _data = _word;
+            /*
+             * TRIE ROOT SETTING
+             */
+
+            if(!_root[_data[0]])
+                _root[_data[0]] = {};
+
+            var _current = _root[_data[0]];
+
+            for(var j = 1; j < _data.length; j++) {
+                if(!_current[_data[j]])
+                    _current[_data[j]] = {};
+
+                _current = _current[_data[j]];
+
+                if(_data[j-1] == ' '){ // ROOT ADD CONDITION
+                    if(!_root[_data[j]])
+                        _root[_data[j]] = {};
+
+                    var _root_iterator = _root[_data[j]];
+                    for(var k = j+1; k < _data.length; k++){
+                        if(_root_iterator[_data[k]]) {
+                            _root_iterator = _root_iterator[_data[k]];
+                        }else {
+                            _root_iterator[_data[k]] = {};
+                            _root_iterator = _root_iterator[_data[k]];
+                        }
+                    }
+
+                    if(!_root_iterator["raw"]){
+                        _root_iterator["raw"] = [];
+                        _root_iterator["raw"].push(_what);
+                    }
+                }
+            }
+
+            if(!_current["raw"])
+                _current["raw"] = [];
+
+            _current["raw"].push(_what);
+        },
+        searchOnBasicTrie: function(_query) {
             var result = [];
             console.log(this.fields);
 
@@ -184,7 +273,7 @@ window.Protogo = (function() {
                 var _field_result = this[this.fields.names[_idx]].search(_query);
 
                 console.log(_field_result);
-                
+
                 for(var j = 0; j < _field_result.length; j++)
                     result.push(_field_result[j]);
             }
@@ -243,5 +332,5 @@ window.Protogo = (function() {
         }
     };
 
-    return protogo;   
+    return protogo;
 }());

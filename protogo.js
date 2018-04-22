@@ -20,14 +20,14 @@ window.Protogo = (function() {
         this.fields = {};
         // this.root = {};
     }
-    
+
     protogo.prototype = {
         init: function(_src) {
             var self = this;
-            
+
             _proto.raw = _src;
             _proto.fields = {};
-            
+
             return this.add(_src);
         },
         /* Analyzing part of source data structure */
@@ -41,17 +41,17 @@ window.Protogo = (function() {
                 var _field_order = [];
 
                 var _MATCH_THRESHOLD = self.MATCH_THRESHOLD;
-                
+
                 var _ks = Object.keys(_src[0]);
 
                 console.log(_ks);
-                
+
                 _ks.some(function(_key) {
                     var _value_root;
                     var _data_array;
 
                     console.log(_key);
-                    
+
                     if(typeof _proto.fields[_key] != 'undefined'){
                         console.log(self.fields[_key]);
                         _value_root = (typeof _proto.fields[_key].root == 'undefined') ? {} : _proto.fields[_key].root;
@@ -78,15 +78,15 @@ window.Protogo = (function() {
                         value_list : _data_array,
                         root : _value_root,
                         search : function(_query){
-                            
+
                             var _queryResult = [];
 
                             // trie search applied
                             var _current = this.root;
-                            
+
                             if(self.MATCH_THRESHOLD)
                                 _MATCH_THRESHOLD = self.MATCH_THRESHOLD;
-                        
+
                             var _idx = 0;
                             for(var i = 0 ; i < _query.length; i++) {
                                 if(_current[_query[i]]){
@@ -125,7 +125,7 @@ window.Protogo = (function() {
                             } else {
                                 console.log("there is no result");
                             }
-                        
+
                             return _queryResult;
                         }
                     };
@@ -146,14 +146,77 @@ window.Protogo = (function() {
             else {
                 return null;
             }
-            
+
             //return this.addOnBasicTrie(_src);
         },
         search: function(_query) {
             return this.searchOnBasicTrie(_query);
         },
-        addOnMoebiousTrie: function(_src) {
-            /* should be implemented */
+        addOnMoebiousTrie: function(_root, _word, _what) {
+            var self = this;
+            var current = _root;
+
+            console.log(`log : ${_root}, ${_word}, ${_what}`);
+            var prefix = null;
+            var prefix_length = 0;
+            for(var i = _word.length; i >= 1; i--) {
+                var subword = _word.substr(0, i);
+                if(current[subword]) {
+                    prefix = subword;
+                    prefix_length = i;
+                    break;
+                }
+            }
+
+            if(prefix) {
+                console.log(`1 log : ${prefix}`);
+                self.addOnMoebiousTrie(current[prefix], _word.substr(prefix_length, _word.length), _what);
+            }
+            else {
+                console.log(`2 log : ${_word}`);
+                var rootKeys = null;//Object.keys(current);
+                if(current.__object$) {
+                    var current_temp = Object.assign({}, current);
+                    delete current_temp.__object$;
+                    rootKeys = Object.keys(current_temp);
+                } else {
+                    rootKeys = Object.keys(current);
+                }
+
+                var found_check = false;
+                if(rootKeys.length > 0) {
+                    rootKeys.some(function(_key) {
+                        if(_key[0] == _word[0]) {
+                            found_check = true;
+                            
+                            prefix = _key[0];
+                            prefix_length = 1;
+                            for(; prefix_length < _key.length; prefix_length++) {
+                                if(_key[prefix_length] != _word[prefix_length]){
+                                    prefix = _word.substr(0, prefix_length);
+                                    break;
+                                }
+                            }
+
+                            console.log(`${prefix}, ${_key}, ${_word}`);
+                            current[prefix] = {};
+                            current[prefix][_key.substr(prefix_length, _key.length - prefix_length)] = current[_key];
+                            delete current[_key];
+
+                            if(prefix.localeCompare(_word))
+                                current[prefix][_word.substr(prefix_length, _word.length - prefix_length)].__object$ = _what;
+                            else
+                                current[prefix].__object$ = _what;
+                            
+                        }
+                    });
+                }
+
+                if(!found_check){
+                    current[_word] = {};
+                    current[_word].__object$ = _what;
+                }
+            }
         },
         addOnBasicTrie: function(_root, _word, _what) {
             var _data = _word;
@@ -169,13 +232,13 @@ window.Protogo = (function() {
             for(var j = 1; j < _data.length; j++) {
                 if(!_current[_data[j]])
                     _current[_data[j]] = {};
-                
+
                 _current = _current[_data[j]];
-                        
+
                 if(_data[j-1] == ' '){ // ROOT ADD CONDITION
                     if(!_root[_data[j]])
                         _root[_data[j]] = {};
-                    
+
                     var _root_iterator = _root[_data[j]];
                     for(var k = j+1; k < _data.length; k++){
                         if(_root_iterator[_data[k]]) {
@@ -185,17 +248,17 @@ window.Protogo = (function() {
                             _root_iterator = _root_iterator[_data[k]];
                         }
                     }
-                    
+
                     if(!_root_iterator["raw"]){
                         _root_iterator["raw"] = [];
                         _root_iterator["raw"].push(_what);
                     }
                 }
             }
-            
+
             if(!_current["raw"])
                 _current["raw"] = [];
-                    
+
             _current["raw"].push(_what);
         },
         searchOnBasicTrie: function(_query) {
@@ -210,7 +273,7 @@ window.Protogo = (function() {
                 var _field_result = this[this.fields.names[_idx]].search(_query);
 
                 console.log(_field_result);
-                
+
                 for(var j = 0; j < _field_result.length; j++)
                     result.push(_field_result[j]);
             }
@@ -269,5 +332,5 @@ window.Protogo = (function() {
         }
     };
 
-    return protogo;   
+    return protogo;
 }());

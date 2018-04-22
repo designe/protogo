@@ -78,55 +78,7 @@ window.Protogo = (function() {
                         value_list : _data_array,
                         root : _value_root,
                         search : function(_query){
-
-                            var _queryResult = [];
-
-                            // trie search applied
-                            var _current = this.root;
-
-                            if(self.MATCH_THRESHOLD)
-                                _MATCH_THRESHOLD = self.MATCH_THRESHOLD;
-
-                            var _idx = 0;
-                            for(var i = 0 ; i < _query.length; i++) {
-                                if(_current[_query[i]]){
-                                    _current = _current[_query[i]];
-                                    _idx++;
-                                    continue;
-                                }
-                                else
-                                    break;
-                            }
-                            if(_idx >= _MATCH_THRESHOLD){
-                                var _queue_idx = 0;
-                                var _queue_end = 0;
-                                var _queue_root = [];
-                                for(var _v in _current){
-                                    if(_v == "raw"){
-                                        for(var i = 0; i < _current[_v].length; i++)
-                                            _queryResult.push(_current[_v][i]);
-                                    } else {
-                                        _queue_root.push(_current[_v]);
-                                        _queue_end++;
-                                    }
-                                }
-                                for(_queue_idx = 0; _queue_idx != _queue_end; _queue_idx++) {
-                                    for(var _sub in _queue_root[_queue_idx]) {
-                                        if(_sub == "raw") {
-                                            for(var i = 0 ; i < _queue_root[_queue_idx]["raw"].length; i++)
-                                                _queryResult.push(_queue_root[_queue_idx]["raw"][i]);
-                                            continue;
-                                        } else {
-                                            _queue_root.push(_queue_root[_queue_idx][_sub]);
-                                            _queue_end++;
-                                        }
-                                    }
-                                }
-                            } else {
-                                console.log("there is no result");
-                            }
-
-                            return _queryResult;
+                            return self.searchOnBasicTrie(this.root, _query);
                         }
                     };
 
@@ -150,7 +102,23 @@ window.Protogo = (function() {
             //return this.addOnBasicTrie(_src);
         },
         search: function(_query) {
-            return this.searchOnBasicTrie(_query);
+            var result = [];
+            console.log(this.fields);
+
+            console.log("field count = " + this.fields.count);
+            for(var i = 0; i < this.fields.count; i++) {
+                var _idx = this.fields.order[i];
+                console.log(_idx);
+                console.log(this.fields.names[_idx]);
+                var _field_result = this[this.fields.names[_idx]].search(_query);
+
+                console.log(_field_result);
+
+                for(var j = 0; j < _field_result.length; j++)
+                    result.push(_field_result[j]);
+            }
+
+            return result;
         },
         addOnMoebiousTrie: function(_root, _word, _what) {
             var self = this;
@@ -169,11 +137,11 @@ window.Protogo = (function() {
             }
 
             if(prefix) {
-                console.log(`1 log : ${prefix}`);
+                //console.log(`1 log : ${prefix}`);
                 self.addOnMoebiousTrie(current[prefix], _word.substr(prefix_length, _word.length), _what);
             }
             else {
-                console.log(`2 log : ${_word}`);
+                //console.log(`2 log : ${_word}`);
                 var rootKeys = null;//Object.keys(current);
                 if(current.__object$) {
                     var current_temp = Object.assign({}, current);
@@ -203,9 +171,10 @@ window.Protogo = (function() {
                             current[prefix][_key.substr(prefix_length, _key.length - prefix_length)] = current[_key];
                             delete current[_key];
 
-                            if(prefix.localeCompare(_word))
+                            if(prefix.localeCompare(_word)){
+                                current[prefix][_word.substr(prefix_length, _word.length - prefix_length)] = {};
                                 current[prefix][_word.substr(prefix_length, _word.length - prefix_length)].__object$ = _what;
-                            else
+                            }else
                                 current[prefix].__object$ = _what;
                             
                         }
@@ -216,6 +185,83 @@ window.Protogo = (function() {
                     current[_word] = {};
                     current[_word].__object$ = _what;
                 }
+            }
+        },
+        searchOnMoebiousTrie: function(_root, _query) {
+            var _queryResult = [];
+
+            var _current = _root;
+            var _query_instance = _query;
+            var _query_instance_length = _query_instance.length;
+
+            var found_check = false;
+            
+            while(_query_instance_length != 0){
+                var prefix = _query_instance.substr(0, _query_instance_length);
+                if(_current[prefix]) {
+                    _current = _current[prefix];
+
+                    _query_instance = _query_instance.substr(prefix.length, _query_instance.length - prefix.length);
+                    _query_instance_length = _query_instance.length;
+                    
+                    if(_query_instance_length == 0){
+                        found_check = true;
+                        console.log(`${prefix}, ${_current.__object$}`);
+                        break;
+                    }
+                } else {
+                    _query_instance_length--;
+                }
+            }
+
+            if(!found_check) {
+                _current = _root;
+
+                var keysArray = Object.keys(_current);
+                keysArray.some(function(_key) {
+                    if(_query[0] == _key[0]) {
+                        found_check = true;
+
+                        var min_length = (_query.length > _key.length) ? _key.length : _query.length;
+                        for(var i = 1; i < min_length; i++) {
+                            if(_query[i] != _key[i])
+                                found_check = false;
+                        }
+
+                        console.log(`${min_length}, ${found_check}`);
+
+                        if(found_check) {
+                            // full search on prefix
+                            var queue_result = [];
+                            var front = 0;
+                            var end = 1;
+                            queue_result.push(_key);
+                            if(_current[_key].__object$)
+                                _queryResult.push(_current[_key].__object$);
+                            
+                            do {
+                                for(var k in _current[queue_result[front]]) {
+                                    console.log(k);
+                                    console.log(queue_result);
+                                    if(k.localeCompare("__object$")) {
+                                        queue_result.push(k);
+                                        if(_current[queue_result[front]][k].__object$)
+                                            _queryResult.push(_current[queue_result[front]][k].__object$);
+                                        
+                                        end++;
+                                    }
+                                }
+
+                                _current = _current[queue_result[front]];
+                                console.log(`${front} , ${end}, ${_current}`);
+
+                                front++;
+                            } while(front != end);
+
+                            console.log(_queryResult);
+                        }
+                    }
+                });
             }
         },
         addOnBasicTrie: function(_root, _word, _what) {
@@ -261,24 +307,56 @@ window.Protogo = (function() {
 
             _current["raw"].push(_what);
         },
-        searchOnBasicTrie: function(_query) {
-            var result = [];
-            console.log(this.fields);
+        searchOnBasicTrie: function(_root, _query) {
+            var _queryResult = [];
 
-            console.log("field count = " + this.fields.count);
-            for(var i = 0; i < this.fields.count; i++) {
-                var _idx = this.fields.order[i];
-                console.log(_idx);
-                console.log(this.fields.names[_idx]);
-                var _field_result = this[this.fields.names[_idx]].search(_query);
+            // trie search applied
+            var _current = _root;
 
-                console.log(_field_result);
+            if(_proto.MATCH_THRESHOLD)
+                _MATCH_THRESHOLD = _proto.MATCH_THRESHOLD;
 
-                for(var j = 0; j < _field_result.length; j++)
-                    result.push(_field_result[j]);
+            var _idx = 0;
+            for(var i = 0 ; i < _query.length; i++) {
+                if(_current[_query[i]]){
+                    _current = _current[_query[i]];
+                    _idx++;
+                    continue;
+                }
+                else
+                    break;
+            }
+            if(_idx >= _MATCH_THRESHOLD){
+                var _queue_idx = 0;
+                var _queue_end = 0;
+                var _queue_root = [];
+                for(var _v in _current){
+                    if(_v == "raw"){
+                        for(var i = 0; i < _current[_v].length; i++)
+                            _queryResult.push(_current[_v][i]);
+                    } else {
+                        _queue_root.push(_current[_v]);
+                        _queue_end++;
+                    }
+                }
+                for(_queue_idx = 0; _queue_idx != _queue_end; _queue_idx++) {
+                    for(var _sub in _queue_root[_queue_idx]) {
+                        if(_sub == "raw") {
+                            for(var i = 0 ; i < _queue_root[_queue_idx]["raw"].length; i++)
+                                _queryResult.push(_queue_root[_queue_idx]["raw"][i]);
+                            continue;
+                        } else {
+                            _queue_root.push(_queue_root[_queue_idx][_sub]);
+                            _queue_end++;
+                        }
+                    }
+                }
+            } else {
+                console.log("there is no result");
             }
 
-            return result;
+            return _queryResult;
+            
         },
         compare: function(_a, _b) {
             /* _first's length is longer than _second's length */

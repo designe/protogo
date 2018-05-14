@@ -22,7 +22,7 @@ export var Protogo = (function() {
         this.MATCH_THRESHOLD = 2;
         this.raw = null;
         this.fields = {};
-        this.engine = null;//new ChoiTrie();
+        this.engine = new ChoiTrie();
         // this.root = {};
     }
 

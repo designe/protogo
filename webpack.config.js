@@ -1,20 +1,33 @@
 /**
  *
- * Webpack config for Protogo library
+ * Webpack config for CHOI-TRIE library
  *
  * Author : jbear; JI-WOONG CHOI
  * Contact : http://jbear.co
  * Copyright @ jbear
  *
 **/
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 module.exports = {
     entry: './protogo.js',
     output: {
         path: __dirname,
-        filename: 'protogo.min.test.js'
+        filename: 'protogo.min.js'
     },
-    mode: 'development',
+	optimization: {
+		minimizer: [
+			new UglifyJsPlugin({ 
+			cache: true,
+			uglifyOptions: {
+				compress: {
+					drop_console:true
+				}	
+			}	
+			} )
+		]
+	},
+    mode: 'production',
     module: {
         rules: [
             {

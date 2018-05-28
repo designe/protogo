@@ -9,18 +9,27 @@
 **/
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
-module.exports = {
+export default () => (
+{
     entry: './protogo.js',
     output: {
         path: __dirname,
-        filename: 'protogo.min.js'
+        filename: 'protogo.min.js',
+	libraryTarget: 'window',
+	globalObject: 'this',
+	library: 'Protogo'
     },
 	optimization: {
 		minimizer: [
 			new UglifyJsPlugin({ 
-			cache: true,
 			uglifyOptions: {
+				mangle:{
+					keep_fnames:true,
+				},
 				compress: {
+					keep_fnames:true,
+					dead_code:true,
+					unused:true,
 					drop_console:true
 				}	
 			}	
@@ -40,4 +49,5 @@ module.exports = {
             }
         ]
     }
-};
+}
+);

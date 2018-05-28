@@ -10,7 +10,7 @@
  *
 **/
 
-import { ChoiTrie } from "./choi-trie.js/choi-trie.js";
+import { ChoiTrie } from "./choi-trie.js/dist/choi-trie.js";
 
 export var Protogo = (function() {
     function protogo() {
